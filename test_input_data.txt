@@ -1,6 +1,8 @@
-Ian DeGroot, ian.degroot@yahoo.com, NA
-Brenna Zalewski, brenna.z@yahoo.com, Adam Zalewski, Ian DeGroot
-Adam Zalewski, adam.z@yahoo.com, Brenna Zalewski
-Joseph Dunne, joseph.d@yahoo.com, NA
-Catherine Gerhardt, catherine.g@yahoo.com, Travis Gerhardt
-Travis Gerhardt, travis.g@yahoo.com, Catherine Gerhardt
+# First Last; Email; Can't give gift to; Give gift to
+
+Ian DeGroot; ian.degroot@yahoo.com; NA; NA
+Brenna Zalewski; brenna.z@yahoo.com; Adam Zalewski, Ian DeGroot; Joseph Dunne
+Adam Zalewski; adam.z@yahoo.com; Brenna Zalewski; NA
+Joseph Dunne; joseph.d@yahoo.com; NA; NA
+Catherine Gerhardt; catherine.g@yahoo.com; Travis Gerhardt; NA
+Travis Gerhardt; travis.g@yahoo.com; Catherine Gerhardt; NA

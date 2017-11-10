@@ -1,4 +1,4 @@
-import smtplib, sys
+import smtplib, sys, random
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -9,7 +9,7 @@ class Person:
         self.last_name = lname
         self.email_addr = mail_addr
         self.no_pair = []
-        self.giftee = None
+        self.giftee = "no one"
 
     def __str__(self):
         if len(self.no_pair) == 0:
@@ -46,31 +46,62 @@ if __name__ == "__main__":
     # Get people data from text file
     with open(sys.argv[1]) as input_file:
         for line in input_file:
+            # Skip commented and empty lines
+            if line.startswith("#") or not line.split():
+                continue
             # Parse people data
             print(line)
-            person_data = line.split(", ")
+            person_data = line.split(";")
+            if (len(person_data) != 4):
+                print("ERROR: The following line of the input text file was not formatted correctly:")
+                print("\t", line)
+                sys.exit()
+            # Split first and last name
             names = person_data[0].split()
-            no_pairs = person_data[2:]
+            email = person_data[1]
 
             # Create Person object out of each data entry and store in the master list
-            master_list.append(Person(names[0], names[1], person_data[1]))
+            master_list.append(Person(names[0], names[1], email))
+
+            # Check for people that this person cannot gift to
+            #if len(person_data) > 2:
+            no_pairs = person_data[2].strip()
+                #if len(person_data) > 3:
+            giftee = person_data[3].strip()
+            if giftee != "NA":
+                master_list[-1].giftee = giftee
 
             # Add people that this person cannot gift to
-            if no_pairs[0].strip() != "NA":
-                for n in no_pairs:
+            if no_pairs != "NA":
+                for n in no_pairs.split(","):
                     master_list[-1].no_pair.append(n.strip())
 
             # Push object onto temporary stacks
             gifters.append(master_list[-1])
             giftees.append(master_list[-1])
 
-    for p in master_list:
-        print(p)
-
     # Shuffle each stack
+    random.shuffle(gifters)
+    random.shuffle(giftees)
 
     # Use last person in both lists and give giftee to gifter, if they can't be paired then swap giftee
+    for _ in range(len(gifters)):
+        gifter = gifters[-1]
+        giftee = giftees[-1]
 
-    # Add each gifter to a list
+        no_match_found = True
+        alt_giftee_index = 0
+
+        while no_match_found:
+            for bad_match in gifter.no_pair:
+                if (giftee.first_name + " " + giftee.last_name) == bad_match:
+                    # Get a new giftee, - 2 so that the same giftee can't be selected
+                    alt_giftee_index = random.randit(0, len(gifters) - 2)
+                    giftee = giftees[alt_giftee_index]
+
+
+        gifter.giftee = giftee.first_name + " " + giftee.last_name
 
     # Send email to each person in the list, telling them their giftee
+    for p in master_list:
+        print(p)
