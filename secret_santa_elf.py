@@ -9,13 +9,21 @@ class Person:
         self.last_name = lname
         self.email_addr = mail_addr
         self.no_pair = []
-        self.giftee = "no one"
+        self.giftee = None
 
     def __str__(self):
         if len(self.no_pair) == 0:
             return "Person:\n{} {}\nGiving a gift to {}\n".format(self.first_name, self.last_name, self.giftee)
         else:
             return "Person:\n{} {}\nCan't give a gift to {}\nGiving a gift to {}\n".format(self.first_name, self.last_name, ", ".join([str(n) for n in self.no_pair]), self.giftee)
+
+    # Return True if and only if the passed in name is not in the no_pair list
+    def can_gift(self, name):
+        for cannot_gift_name in self.no_pair:
+            if name == cannot_gift_name:
+                return False
+        return True
+
 
 
 def send_email():
@@ -68,13 +76,16 @@ if __name__ == "__main__":
             no_pairs = person_data[2].strip()
                 #if len(person_data) > 3:
             giftee = person_data[3].strip()
-            if giftee != "NA":
-                master_list[-1].giftee = giftee
+            # if giftee != "NA":
+            #     master_list[-1].giftee = giftee
 
             # Add people that this person cannot gift to
             if no_pairs != "NA":
                 for n in no_pairs.split(","):
                     master_list[-1].no_pair.append(n.strip())
+            # Add themseleves to the list of people they can't gift to
+            master_list[-1].no_pair.append(master_list[-1].first_name + " " + master_list[-1].last_name)
+
 
             # Push object onto temporary stacks
             gifters.append(master_list[-1])
@@ -93,14 +104,23 @@ if __name__ == "__main__":
         alt_giftee_index = 0
 
         while no_match_found:
-            for bad_match in gifter.no_pair:
-                if (giftee.first_name + " " + giftee.last_name) == bad_match:
+            no_match_found = False
+            if not gifter.can_gift(giftee.first_name + " " + giftee.last_name):
+                if len(gifters) == 1:
+                    print("Sucks to suck!!!")
+                else:
                     # Get a new giftee, - 2 so that the same giftee can't be selected
-                    alt_giftee_index = random.randit(0, len(gifters) - 2)
-                    giftee = giftees[alt_giftee_index]
+                    alt_giftee_index = random.randint(0, len(gifters) - 2)
+                    giftees[-1], giftees[alt_giftee_index] = giftees[alt_giftee_index], giftees[-1]
+                    giftee = giftees[-1]
+                    no_match_found = True
+                    print("Bad pair found!!!!")
 
 
         gifter.giftee = giftee.first_name + " " + giftee.last_name
+
+        gifters.pop()
+        giftees.pop()
 
     # Send email to each person in the list, telling them their giftee
     for p in master_list:
