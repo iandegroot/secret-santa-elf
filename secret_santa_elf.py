@@ -12,10 +12,17 @@ class Person:
         self.giftee = None
 
     def __str__(self):
-        if len(self.no_pair) == 0:
-            return "Person:\n{} {}\nGiving a gift to {}\n".format(self.first_name, self.last_name, self.giftee)
+        giftee_print = ""
+        if isinstance(self.giftee, Person):
+            giftee_print = self.giftee.first_name + " " + self.giftee.last_name
         else:
-            return "Person:\n{} {}\nCan't give a gift to {}\nGiving a gift to {}\n".format(self.first_name, self.last_name, ", ".join([str(n) for n in self.no_pair]), self.giftee)
+           giftee_print = self.giftee 
+
+
+        if len(self.no_pair) == 0:
+            return "Person:\n{} {}\nGiving a gift to {}\n".format(self.first_name, self.last_name, giftee_print)
+        else:
+            return "Person:\n{} {}\nCan't give a gift to {}\nGiving a gift to {}\n".format(self.first_name, self.last_name, ", ".join([str(n) for n in self.no_pair]), giftee_print)
 
     # Return True if and only if the passed in name is not in the no_pair list
     def can_gift(self, name):
@@ -28,31 +35,34 @@ class Person:
 
 def send_email():
     from_addr = "ianpdegroot@gmail.com"
-    to_addr = "Address you want to send to"
+    to_addr = "ian.degroot@yahoo.com"
     msg = MIMEMultipart()
     msg["From"] = from_addr
     msg["To"] = to_addr
     msg["Subject"] = "Secret Santa Elf Test Email"
      
-    body = "YOUR MESSAGE HERE"
+    body = "Hello Ian\n\nThis is a test\n\nThanks,\nIan"
     msg.attach(MIMEText(body, "plain"))
      
     try:
-        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        # server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        # server.set_debuglevel(True)
+        # server.ehlo()
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.set_debuglevel(True)
         server.ehlo()
-        server.login(from_addr, "P@ssword!")
+        server.starttls()
+        server.login(from_addr, "")
         text = msg.as_string()
         server.sendmail(from_addr, to_addr, text)
         server.quit()
-    except:
-        print("Something went wrong...")
+    except Exception as e:
+        print(e)
 
-if __name__ == "__main__":
-    master_list = []
-    gifters = []
-    giftees = []
-    # Get people data from text file
-    with open(sys.argv[1]) as input_file:
+
+def parse_input_file(everyone, filename):
+    # Fill the master list with people from the input file
+    with open(filename) as input_file:
         for line in input_file:
             # Skip commented and empty lines
             if line.startswith("#") or not line.split():
@@ -87,9 +97,14 @@ if __name__ == "__main__":
             master_list[-1].no_pair.append(master_list[-1].first_name + " " + master_list[-1].last_name)
 
 
-            # Push object onto temporary stacks
-            gifters.append(master_list[-1])
-            giftees.append(master_list[-1])
+def assign_giftees_to_gifters(everyone):
+    gifters = []
+    giftees = []
+
+    # Push people onto two temporary stacks, everyone will be a gifter and a giftee
+    for person in everyone:
+        gifters.append(person)
+        giftees.append(person)
 
     # Shuffle each stack
     random.shuffle(gifters)
@@ -97,31 +112,64 @@ if __name__ == "__main__":
 
     # Use last person in both lists and give giftee to gifter, if they can't be paired then swap giftee
     for _ in range(len(gifters)):
-        gifter = gifters[-1]
-        giftee = giftees[-1]
+        curr_gifter = gifters[-1]
+        curr_giftee = giftees[-1]
 
         no_match_found = True
         alt_giftee_index = 0
+        num_new_giftees_tried = 0
 
+        # Find a giftee for each gifter
         while no_match_found:
             no_match_found = False
-            if not gifter.can_gift(giftee.first_name + " " + giftee.last_name):
-                if len(gifters) == 1:
-                    print("Sucks to suck!!!")
+            # Check if the gifter can give to the selected giftee
+            if not curr_gifter.can_gift(curr_giftee.first_name + " " + curr_giftee.last_name):
+                # If not, check if this is a special case:
+                # The gifter cannot give to any of the giftees that are left
+                if len(gifters) == 1 or num_new_giftees_tried > 2:
+                    # Restart the whole process
+                    return False
                 else:
                     # Get a new giftee, - 2 so that the same giftee can't be selected
                     alt_giftee_index = random.randint(0, len(gifters) - 2)
+                    # Swap new giftee with the current giftee at the top of the stack
                     giftees[-1], giftees[alt_giftee_index] = giftees[alt_giftee_index], giftees[-1]
-                    giftee = giftees[-1]
+                    curr_giftee = giftees[-1]
+                    # Now go back and check if the gifter can give to the new giftee
                     no_match_found = True
+                    num_new_giftees_tried += 1
                     print("Bad pair found!!!!")
 
-
-        gifter.giftee = giftee.first_name + " " + giftee.last_name
+        curr_gifter.giftee = curr_giftee
 
         gifters.pop()
         giftees.pop()
 
-    # Send email to each person in the list, telling them their giftee
+    return True
+
+if __name__ == "__main__":
+    master_list = []
+
+    ##### Get people data from text file #####
+    parse_input_file(master_list, sys.argv[1])
+
+    ##### Give out assignments #####
+    redo_cntr = 0
+    assigning_results = assign_giftees_to_gifters(master_list)
+
+    while not assigning_results:
+        print("Redoing assignments!!!")
+        redo_cntr += 1
+        assigning_results = assign_giftees_to_gifters(master_list)
+
+    ##### Send email to each person in the list, telling them who they need to give a gift to #####
     for p in master_list:
         print(p)
+
+    if assigning_results:
+        print("Gave out successful assignments!")
+        print("Redo counter:", redo_cntr)
+    else:
+        print("Didn't give out successfully assignments... Please try again")
+
+    #send_email()
