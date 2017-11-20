@@ -33,24 +33,39 @@ class Person:
 
 
 
-def send_email():
+def send_email(person):
     from_addr = "ianpdegroot@gmail.com"
-    to_addr = "ian.degroot@yahoo.com"
+    to_addr = person.email_addr
     msg = MIMEMultipart()
     msg["From"] = from_addr
     msg["To"] = to_addr
     msg["Subject"] = "Secret Santa Elf Test Email"
+
+    ascii_santa = ""
+    ascii_santa += "          / \\" + "\n"
+    ascii_santa += "         /   \\" + "\n"
+    ascii_santa += "        /_____\\" + "\n"
+    ascii_santa += "      {`_______`}" + "\n"
+    ascii_santa += "       // . . \\\\" + "\n"
+    ascii_santa += "      (/   *   \\)" + "\n"
+    ascii_santa += "      |'-' = `-'|" + "\n"
+    ascii_santa += "      |         |" + "\n"
+    ascii_santa += "      /\\       /\\" + "\n"
+    ascii_santa += "     /  `.   .`  \\" + "\n"
+    ascii_santa += "    /_/   \\*/   \\_\\" + "\n"
+    ascii_santa += "   {__}###[_]###{__}" + "\n"
+    ascii_santa += "   (_/\\_________/\\_)" + "\n"
+    ascii_santa += "       |___|___|" + "\n"
+    ascii_santa += "        |--|--|" + "\n"
+    ascii_santa += "       (__)`(__)" + "\n"
      
-    body = "Hello Ian\n\nThis is a test\n\nThanks,\nIan"
+    body = "Hey {}!\n\nFor Secret Santa this year you'll be giving {} {} a present. Make sure you get them something good!\n\n {} \n\nXOXOXOX,\nSanta's Elf".format(person.first_name, person.giftee.first_name, ascii_santa, person.giftee.last_name)
     msg.attach(MIMEText(body, "plain"))
      
     try:
-        # server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
-        # server.set_debuglevel(True)
-        # server.ehlo()
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.set_debuglevel(True)
-        server.ehlo()
+        # server.ehlo()
         server.starttls()
         server.login(from_addr, "")
         text = msg.as_string()
@@ -172,4 +187,11 @@ if __name__ == "__main__":
     else:
         print("Didn't give out successfully assignments... Please try again")
 
-    #send_email()
+    answer = input("Would you like to email the generated assignments? (y/n):\n").lower()
+    while answer != "y" and answer != "n":
+        answer = input("Invalid input.\nWould you like to email the generated assignments? (y/n):\n")
+
+    if answer == "y":
+        send_email(master_list[0])
+        # for p in master_list:
+        #     send_email(p)
