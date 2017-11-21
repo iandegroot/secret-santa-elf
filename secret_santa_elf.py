@@ -1,4 +1,4 @@
-import smtplib, sys, random
+import smtplib, sys, random, getpass
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -58,16 +58,33 @@ def send_email(person):
     ascii_santa += "       |___|___|" + "\n"
     ascii_santa += "        |--|--|" + "\n"
     ascii_santa += "       (__)`(__)" + "\n"
+
+    html = """\
+            <html>
+              <head></head>
+              <body>
+                <p>Hey {}!<br>
+                   How are you?<br>
+                   For Secret Santa this year you'll be giving {} {} a present. Make sure you get them something good!<br>
+                   Here is the <a href="http://www.python.org">link</a> you wanted.<br>
+                   {}<br>
+                   XOXOXOX,\nSanta's Elf
+                </p>
+              </body>
+            </html>
+            """.format(person.first_name, person.giftee.first_name, person.giftee.last_name, ascii_santa)
      
-    body = "Hey {}!\n\nFor Secret Santa this year you'll be giving {} {} a present. Make sure you get them something good!\n\n {} \n\nXOXOXOX,\nSanta's Elf".format(person.first_name, person.giftee.first_name, ascii_santa, person.giftee.last_name)
+    body = "Hey {}!\n\nFor Secret Santa this year you'll be giving {} {} a present. Make sure you get them something good!\n\n {} \n\nXOXOXOX,\nSanta's Elf".format(person.first_name, person.giftee.first_name, person.giftee.last_name, ascii_santa)
     msg.attach(MIMEText(body, "plain"))
+    msg.attach(MIMEText(html, "html"))
+
      
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.set_debuglevel(True)
         # server.ehlo()
         server.starttls()
-        server.login(from_addr, "")
+        server.login(from_addr, "add_password_here")
         text = msg.as_string()
         server.sendmail(from_addr, to_addr, text)
         server.quit()
@@ -137,7 +154,7 @@ def assign_giftees_to_gifters(everyone):
         # Find a giftee for each gifter
         while no_match_found:
             no_match_found = False
-            # Check if the gifter can give to the selected giftee
+            # Check if the gifter can't give to the selected giftee, if they can then skip this block
             if not curr_gifter.can_gift(curr_giftee.first_name + " " + curr_giftee.last_name):
                 # If not, check if this is a special case:
                 # The gifter cannot give to any of the giftees that are left
@@ -192,6 +209,8 @@ if __name__ == "__main__":
         answer = input("Invalid input.\nWould you like to email the generated assignments? (y/n):\n")
 
     if answer == "y":
+        #email = input("Please enter the email you'd like to send the assignments froms:\n")
+        #password = getpass.getpass("Please enter the password of this email:\n")
         send_email(master_list[0])
         # for p in master_list:
         #     send_email(p)
