@@ -39,7 +39,7 @@ def send_email(person):
     msg = MIMEMultipart()
     msg["From"] = from_addr
     msg["To"] = to_addr
-    msg["Subject"] = "Secret Santa Elf Test Email"
+    msg["Subject"] = "Secret Santa Assignment!"
 
     ascii_santa = ""
     ascii_santa += "          / \\" + "\n"
@@ -59,25 +59,59 @@ def send_email(person):
     ascii_santa += "        |--|--|" + "\n"
     ascii_santa += "       (__)`(__)" + "\n"
 
+    ascii_santa = ""
+    ascii_santa += "          / \\"
+    ascii_santa += "         /   \\"
+    ascii_santa += "        /_____\\"
+    ascii_santa += "      {`_______`}"
+    ascii_santa += "       // . . \\\\"
+    ascii_santa += "      (/   *   \\)"
+    ascii_santa += "      |'-' = `-'|"
+    ascii_santa += "      |         |"
+    ascii_santa += "      /\\       /\\"
+    ascii_santa += "     /  `.   .`  \\"
+    ascii_santa += "    /_/   \\*/   \\_\\"
+    ascii_santa += "   {__}###[_]###{__}"
+    ascii_santa += "   (_/\\_________/\\_)"
+    ascii_santa += "       |___|___|"
+    ascii_santa += "        |--|--|"
+    ascii_santa += "       (__)`(__)"
+
+
     html = """\
             <html>
               <head></head>
               <body>
+                <pre style="font-size: 130%">
+                      / \\
+                     /   \\
+                    /_____\\
+                  {{`_______`}}
+                   // . . \\\\
+                  (/   *   \\)
+                  |'-' = `-'|
+                  |         |
+                  /\\       /\\
+                 /  `.   .`  \\
+                /_/   \\*/   \\_\\
+               {{__}}###[_]###{{__}}
+               (_/\\_________/\\_)
+                   |___|___|
+                    |--|--|
+                   (__)`(__)
+                </pre>
                 <p>Hey {}!<br>
-                   How are you?<br>
+                   <br>
                    For Secret Santa this year you'll be giving {} {} a present. Make sure you get them something good!<br>
-                   Here is the <a href="http://www.python.org">link</a> you wanted.<br>
-                   {}<br>
-                   XOXOXOX,\nSanta's Elf
+                   <br>
+                   XOXOXOX,<br>
+                   Santa's Elf
                 </p>
               </body>
             </html>
-            """.format(person.first_name, person.giftee.first_name, person.giftee.last_name, ascii_santa)
+            """.format(person.first_name, person.giftee.first_name, person.giftee.last_name)
      
-    body = "Hey {}!\n\nFor Secret Santa this year you'll be giving {} {} a present. Make sure you get them something good!\n\n {} \n\nXOXOXOX,\nSanta's Elf".format(person.first_name, person.giftee.first_name, person.giftee.last_name, ascii_santa)
-    msg.attach(MIMEText(body, "plain"))
     msg.attach(MIMEText(html, "html"))
-
      
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
@@ -195,8 +229,8 @@ if __name__ == "__main__":
         assigning_results = assign_giftees_to_gifters(master_list)
 
     ##### Send email to each person in the list, telling them who they need to give a gift to #####
-    for p in master_list:
-        print(p)
+    # for p in master_list:
+    #     print(p)
 
     if assigning_results:
         print("Gave out successful assignments!")
@@ -211,6 +245,6 @@ if __name__ == "__main__":
     if answer == "y":
         #email = input("Please enter the email you'd like to send the assignments froms:\n")
         #password = getpass.getpass("Please enter the password of this email:\n")
-        send_email(master_list[0])
-        # for p in master_list:
-        #     send_email(p)
+        #send_email(master_list[0])
+        for p in master_list:
+            send_email(p)
