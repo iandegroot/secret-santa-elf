@@ -1,8 +1,8 @@
 # First Last; Email; Can't give gift to; Give gift to
 
 Ian DeGroot; ianpdegroot@gmail.com; NA; NA
-Brenna Zalewski; ianpdegroot@gmail.com; Adam Zalewski, Ian DeGroot; Joseph Dunne
-Adam Zalewski; ianpdegroot@gmail.com; Brenna Zalewski; NA
+Brenna Zalewski; ianpdegroot@gmail.com; Adam Zalewski; Joseph Dunne
+Adam Zalewski; ianpdegroot@gmail.com; Brenna Zalewski, Ian DeGroot; NA
 Joseph Dunne; ianpdegroot@gmail.com; NA; NA
 Catherine Gerhardt; ianpdegroot@gmail.com; Travis Gerhardt; NA
 Travis Gerhardt; ianpdegroot@gmail.com; Catherine Gerhardt; NA

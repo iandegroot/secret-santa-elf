@@ -10,6 +10,8 @@ class Person:
         self.email_addr = mail_addr
         self.no_pair = []
         self.giftee = None
+        self.forced_gifter = False
+        self.forced_giftee = False
 
     def __str__(self):
         giftee_print = ""
@@ -33,50 +35,13 @@ class Person:
 
 
 
-def send_email(person):
-    from_addr = "ianpdegroot@gmail.com"
+def send_email(person, email, password):
+    from_addr = email
     to_addr = person.email_addr
     msg = MIMEMultipart()
     msg["From"] = from_addr
     msg["To"] = to_addr
     msg["Subject"] = "Secret Santa Assignment!"
-
-    ascii_santa = ""
-    ascii_santa += "          / \\" + "\n"
-    ascii_santa += "         /   \\" + "\n"
-    ascii_santa += "        /_____\\" + "\n"
-    ascii_santa += "      {`_______`}" + "\n"
-    ascii_santa += "       // . . \\\\" + "\n"
-    ascii_santa += "      (/   *   \\)" + "\n"
-    ascii_santa += "      |'-' = `-'|" + "\n"
-    ascii_santa += "      |         |" + "\n"
-    ascii_santa += "      /\\       /\\" + "\n"
-    ascii_santa += "     /  `.   .`  \\" + "\n"
-    ascii_santa += "    /_/   \\*/   \\_\\" + "\n"
-    ascii_santa += "   {__}###[_]###{__}" + "\n"
-    ascii_santa += "   (_/\\_________/\\_)" + "\n"
-    ascii_santa += "       |___|___|" + "\n"
-    ascii_santa += "        |--|--|" + "\n"
-    ascii_santa += "       (__)`(__)" + "\n"
-
-    ascii_santa = ""
-    ascii_santa += "          / \\"
-    ascii_santa += "         /   \\"
-    ascii_santa += "        /_____\\"
-    ascii_santa += "      {`_______`}"
-    ascii_santa += "       // . . \\\\"
-    ascii_santa += "      (/   *   \\)"
-    ascii_santa += "      |'-' = `-'|"
-    ascii_santa += "      |         |"
-    ascii_santa += "      /\\       /\\"
-    ascii_santa += "     /  `.   .`  \\"
-    ascii_santa += "    /_/   \\*/   \\_\\"
-    ascii_santa += "   {__}###[_]###{__}"
-    ascii_santa += "   (_/\\_________/\\_)"
-    ascii_santa += "       |___|___|"
-    ascii_santa += "        |--|--|"
-    ascii_santa += "       (__)`(__)"
-
 
     html = """\
             <html>
@@ -110,15 +75,15 @@ def send_email(person):
               </body>
             </html>
             """.format(person.first_name, person.giftee.first_name, person.giftee.last_name)
-     
+
     msg.attach(MIMEText(html, "html"))
-     
+
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.set_debuglevel(True)
         # server.ehlo()
         server.starttls()
-        server.login(from_addr, "add_password_here")
+        server.login(from_addr, password)
         text = msg.as_string()
         server.sendmail(from_addr, to_addr, text)
         server.quit()
@@ -147,18 +112,20 @@ def parse_input_file(everyone, filename):
             # Create Person object out of each data entry and store in the master list
             master_list.append(Person(names[0], names[1], email))
 
-            # Check for people that this person cannot gift to
-            #if len(person_data) > 2:
+            # Get the list of people that this person cannot gift to
             no_pairs = person_data[2].strip()
-                #if len(person_data) > 3:
+
+            # Set giftee to a gifter
             giftee = person_data[3].strip()
-            # if giftee != "NA":
-            #     master_list[-1].giftee = giftee
+            if giftee != "NA":
+                master_list[-1].forced_gifter = True
+                master_list[-1].giftee = giftee
 
             # Add people that this person cannot gift to
             if no_pairs != "NA":
                 for n in no_pairs.split(","):
                     master_list[-1].no_pair.append(n.strip())
+
             # Add themseleves to the list of people they can't gift to
             master_list[-1].no_pair.append(master_list[-1].first_name + " " + master_list[-1].last_name)
 
@@ -167,10 +134,17 @@ def assign_giftees_to_gifters(everyone):
     gifters = []
     giftees = []
 
-    # Push people onto two temporary stacks, everyone will be a gifter and a giftee
+    # Push people onto two temporary stacks, everyone will be a gifter and a giftee unless they're designated as a forced gifter or giftee
     for person in everyone:
-        gifters.append(person)
-        giftees.append(person)
+        if not person.forced_gifter:
+            gifters.append(person)
+        if not person.forced_giftee:
+            giftees.append(person)
+
+    # Make sure that the two stacks are equal in length
+    if len(gifters) != len(giftees):
+        print("ERROR: The number of gifters does not match the number of giftees (after resloving forced assignments). Exiting the program.")
+        sys.exit()
 
     # Shuffle each stack
     random.shuffle(gifters)
@@ -188,7 +162,7 @@ def assign_giftees_to_gifters(everyone):
         # Find a giftee for each gifter
         while no_match_found:
             no_match_found = False
-            # Check if the gifter can't give to the selected giftee, if they can then skip this block
+            # Check if the gifter can give to the selected giftee, if they can then skip this block
             if not curr_gifter.can_gift(curr_giftee.first_name + " " + curr_giftee.last_name):
                 # If not, check if this is a special case:
                 # The gifter cannot give to any of the giftees that are left
@@ -204,47 +178,73 @@ def assign_giftees_to_gifters(everyone):
                     # Now go back and check if the gifter can give to the new giftee
                     no_match_found = True
                     num_new_giftees_tried += 1
-                    print("Bad pair found!!!!")
 
+        # Assign giftee to gifter
         curr_gifter.giftee = curr_giftee
 
+        # Pop both the gifter and giftee out of their respective stacks
         gifters.pop()
         giftees.pop()
 
     return True
 
+def find_forced_giftees(everyone):
+
+    # Find giftee in giftees stack, assign person object to the gifter instead of just the name, and remove the giftee from the stack
+    for gifter in everyone:
+        # Find the gifters who already have a forced assignment
+        if gifter.forced_gifter:
+            # Check through all the giftees to find the name of the forced assignment
+            found_giftee = False
+            for giftee in everyone:
+                if gifter.giftee == giftee.first_name + " " + giftee.last_name:
+                    gifter.giftee = giftee
+                    giftee.forced_giftee = True
+                    found_giftee = True
+                    break
+            if not found_giftee:
+                print("ERROR: Did not find person " + gifter.giftee + " that " + gifter.first_name + " " + gifter.last_name + " was supposed to give to.")
+                print("Please check the spelling and try again.")
+                print("Exiting the program.")
+                sys.exit()
+
+
 if __name__ == "__main__":
     master_list = []
 
-    ##### Get people data from text file #####
+    ##### Parse People Data From Text File #####
     parse_input_file(master_list, sys.argv[1])
 
-    ##### Give out assignments #####
+    ##### Check for Forced Assignments #####
+    find_forced_giftees(master_list)
+
+    ##### Give Out Assignments #####
     redo_cntr = 0
     assigning_results = assign_giftees_to_gifters(master_list)
 
+    # If the giftees were successfully assigned, call assign_giftees_to_gifters until they are
     while not assigning_results:
-        print("Redoing assignments!!!")
         redo_cntr += 1
         assigning_results = assign_giftees_to_gifters(master_list)
 
-    ##### Send email to each person in the list, telling them who they need to give a gift to #####
     # for p in master_list:
     #     print(p)
 
+    ##### Send Emails #####
     if assigning_results:
         print("Gave out successful assignments!")
         print("Redo counter:", redo_cntr)
     else:
-        print("Didn't give out successfully assignments... Please try again")
+        print("Didn't give out successfully assignments... Exiting the program, please try again.")
+        sys.exit()
 
     answer = input("Would you like to email the generated assignments? (y/n):\n").lower()
     while answer != "y" and answer != "n":
-        answer = input("Invalid input.\nWould you like to email the generated assignments? (y/n):\n")
+        answer = input("Invalid input. Please enter either y or n.\nWould you like to email the generated assignments? (y/n):\n")
 
     if answer == "y":
-        #email = input("Please enter the email you'd like to send the assignments froms:\n")
-        #password = getpass.getpass("Please enter the password of this email:\n")
-        #send_email(master_list[0])
+        email = input("Please enter the email you'd like to send the assignments from:\n")
+        password = getpass.getpass("Please enter the password of this email:\n")
         for p in master_list:
-            send_email(p)
+            #print(p)
+            send_email(p, email, password)
